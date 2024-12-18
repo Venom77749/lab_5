@@ -1,0 +1,263 @@
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <string>
+#include <cstdlib>
+#include <ctime>
+#include <iomanip>
+#include <climits>  // Для INT_MAX и INT_MIN
+#include <cstring>  // Для strcpy
+#include <algorithm>  // Для std::min и std::max
+
+using namespace std;
+
+class FileTasks {
+public:
+    static void run() {
+        int choice;
+        cout << "Выберите задание (1-6): ";
+        cin >> choice;
+        switch (choice) {
+            case 1: task1(); break;
+            case 2: task2(); break;
+            case 3: task3(); break;
+            case 4: task4(); break;
+            case 5: task5(); break;
+            case 6: task6(); break;
+            default: cout << "Неверный выбор задания.\n";
+        }
+    }
+
+private:
+    // Ввод чисел пользователем и запись их в бинарный файл
+    static void fillBinaryFile(const string& filename, int count) {
+        ofstream fout(filename, ios::binary);
+        cout << "Введите " << count << " чисел:\n";
+        for (int i = 0; i < count; ++i) {
+            int num;
+            cin >> num;
+            fout.write(reinterpret_cast<const char*>(&num), sizeof(num));
+        }
+        fout.close();
+        cout << "\nФайл " << filename << " заполнен.\n";
+    }
+
+    // Задание 1
+    static void task1() {
+        string source = "task1_source.bin";
+        string result = "task1_result.bin";
+
+        int count;
+        cout << "Введите количество чисел в исходном файле: ";
+        cin >> count;
+
+        fillBinaryFile(source, count);
+
+        ifstream fin(source, ios::binary);
+        ofstream fout(result, ios::binary);
+        vector<int> data(count);
+        fin.read(reinterpret_cast<char*>(data.data()), count * sizeof(int));
+        cout << "Числа из исходного файла: ";
+        for (int num : data) cout << num << " ";
+        cout << endl;
+
+        for (size_t i = 1; i <= data.size(); ++i) {
+            fout.write(reinterpret_cast<const char*>(data.data()), i * sizeof(int));
+        }
+        fin.close();
+        fout.close();
+
+        cout << "Результат записан в файл " << result << ".\n";
+    }
+
+    // Задание 2
+    static void task2() {
+        string source = "task2_source.bin";
+
+        int count, n;
+        cout << "Введите количество чисел в файле: ";
+        cin >> count;
+        cout << "Введите размер квадратной матрицы n: ";
+        cin >> n;
+
+        fillBinaryFile(source, count);
+
+        ifstream fin(source, ios::binary);
+        vector<int> data(count);
+        fin.read(reinterpret_cast<char*>(data.data()), count * sizeof(int));
+        fin.close();
+
+        cout << "Числа из файла: ";
+        for (int num : data) cout << num << " ";
+        cout << endl;
+
+        vector<vector<int>> matrix(n, vector<int>(n, 0));
+        for (int i = 0; i < n * n; ++i) {
+            if (i < data.size())
+                matrix[i / n][i % n] = data[i];
+        }
+
+        int closestRow = -1, minSum = INT_MAX;
+        for (int i = 0; i < n; ++i) {
+            int sum = 0;
+            for (int j = 0; j < n; ++j) {
+                sum += matrix[i][j];
+            }
+            if (abs(sum) < abs(minSum)) {
+                minSum = sum;
+                closestRow = i;
+            }
+        }
+
+        cout << "Матрица:\n";
+        for (const auto& row : matrix) {
+            for (int val : row) {
+                cout << setw(5) << val;
+            }
+            cout << endl;
+        }
+
+        cout << "Строка с суммой, ближайшей к нулю: " << closestRow + 1 << endl;
+    }
+
+    // Задание 3
+    struct Toy {
+        char name[50];
+        int price;
+        int minAge;
+        int maxAge;
+    };
+
+    static void fillToyFile(const string& filename, int count) {
+        ofstream fout(filename, ios::binary);
+        cout << "Введите информацию об игрушках:\n";
+        for (int i = 0; i < count; ++i) {
+            Toy toy;
+            cout << "Игрушка " << i + 1 << ":\n";
+            cout << "Название: ";
+            cin.ignore();
+            string toyName;
+            getline(cin, toyName);
+            strcpy(toy.name, toyName.c_str());
+            cout << "Цена: ";
+            cin >> toy.price;
+            cout << "Минимальный возраст: ";
+            cin >> toy.minAge;
+            cout << "Максимальный возраст: ";
+            cin >> toy.maxAge;
+
+            fout.write(reinterpret_cast<const char*>(&toy), sizeof(toy));
+        }
+        fout.close();
+    }
+
+    static void task3() {
+        string source = "task3_source.bin";
+
+        int count;
+        cout << "Введите количество игрушек: ";
+        cin >> count;
+
+        fillToyFile(source, count);
+
+        ifstream fin(source, ios::binary);
+        vector<Toy> toys;
+        Toy toy;
+        while (fin.read(reinterpret_cast<char*>(&toy), sizeof(toy))) {
+            toys.push_back(toy);
+        }
+        fin.close();
+
+        cout << "Игрушки для детей 4 и 10 лет:\n";
+        for (const auto& t : toys) {
+            if (t.minAge <= 4 && t.maxAge >= 4 && t.minAge <= 10 && t.maxAge >= 10) {
+                cout << "Название: " << t.name << ", Цена: " << t.price << " руб.\n";
+            }
+        }
+    }
+
+    // Задание 4
+    static void fillTextFile(const string& filename, int count) {
+        ofstream fout(filename);
+        cout << "Введите " << count << " чисел:\n";
+        for (int i = 0; i < count; ++i) {
+            int num;
+            cin >> num;
+            fout << num << endl;
+        }
+        fout.close();
+    }
+
+    static void task4() {
+        string source = "task4_source.txt";
+
+        int count;
+        cout << "Введите количество чисел в файле: ";
+        cin >> count;
+
+        fillTextFile(source, count);
+
+        ifstream fin(source);
+        int num, maxNum = INT_MIN, minNum = INT_MAX;
+        while (fin >> num) {
+            maxNum = max(maxNum, num);
+            minNum = min(minNum, num);
+        }
+        fin.close();
+
+        cout << "Максимум: " << maxNum << ", Минимум: " << minNum << endl;
+        cout << "Произведение макс. и мин. элементов: " << maxNum * minNum << endl;
+    }
+
+    // Задание 5
+    static void task5() {
+        string source = "task5_source.txt";
+
+        int count;
+        cout << "Введите количество чисел в файле: ";
+        cin >> count;
+
+        fillTextFile(source, count);
+
+        ifstream fin(source);
+        int num, oddCount = 0;
+        while (fin >> num) {
+            if (num % 2 != 0) ++oddCount;
+        }
+        fin.close();
+
+        cout << "Количество нечетных элементов: " << oddCount << endl;
+    }
+
+    // Задание 6
+    static void task6() {
+        string source = "task6_source.txt";
+        ofstream fout(source);
+        cout << "Введите строки текста (окончание ввода: пустая строка):\n";
+        string line;
+        cin.ignore();  // Очистка буфера перед вводом строк
+        while (true) {
+            getline(cin, line);
+            if (line.empty()) break;
+            fout << line << endl;
+        }
+        fout.close();
+
+        ifstream fin(source);
+        ofstream foutResult("task6_result.txt");
+        cout << "Длины строк:\n";
+        while (getline(fin, line)) {
+            foutResult << line.size() << endl;
+            cout << "Длина строки: " << line.size() << endl;
+        }
+        fin.close();
+        foutResult.close();
+
+        cout << "Длины строк сохранены в файл task6_result.txt\n";
+    }
+};
+
+int main() {
+    FileTasks::run();
+    return 0;
+}
